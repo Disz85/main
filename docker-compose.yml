@@ -1,0 +1,40 @@
+version: "3"
+
+services:
+  ### FRONTEND ###
+  frontend-webserver:
+    image: nginx:alpine
+    container_name: szallas-frontend-webserver
+    working_dir: /application
+    volumes:
+      - ../frontend:/application
+      - ./config/frontend/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+
+  frontend-php-fpm:
+    build: config/frontend/php
+    container_name: szallas-frontend-php-fpm
+    working_dir: /application
+    volumes:
+      - ../frontend:/application
+      - ./config/frontend/php/php-ini-overrides.ini:/etc/php/8.1/fpm/conf.d/99-overrides.ini
+  ### COMMON ###
+  redis:
+    image: redis:alpine
+    container_name: szallas-redis
+
+
+  reverse-proxy:
+    image: nginx:alpine
+    container_name: szallas-reverse-proxy
+    working_dir: /application
+    depends_on:
+      - frontend-webserver
+      - frontend-php-fpm
+      - redis
+    volumes:
+      - ./config/common/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+
+volumes:
+  szallas-admin-mariadb:
